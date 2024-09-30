@@ -1,0 +1,163 @@
+service: social-network-app
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: ${opt:stage}
+  region: ${opt:region}
+  architecture: arm64
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:BatchGetItem"
+        - "dynamodb:ConditionCheckItem"
+        - "dynamodb:GetItem"
+        - "dynamodb:PutItem"
+        - "dynamodb:Query"
+        - "dynamodb:UpdateItem"
+        - "dynamodb:DeleteItem"
+      Resource:
+        - "arn:aws:dynamodb:${opt:region}:*:table/${self:provider.environment.SOCIAL_NETWORK_TABLE_NAME}"
+  environment:
+    POWERTOOLS_LOG_LEVEL: "INFO"
+    POWERTOOLS_SERVICE_NAME: "social-network-app"
+    # POWERTOOLS_DEV: 1
+    POWERTOOLS_LOGGER_LOG_EVENT: "true"  #context
+    # POWERTOOLS_TRACE_ENABLED: "false"
+
+    SOCIAL_NETWORK_TABLE_NAME: ${opt:stage}-social-network
+
+package:
+  individually: true
+  excludeDevDependencies: true
+
+custom:
+  defaultRegion: "us-east-1"
+  esbuild:
+    bundle: true
+    minify: true
+  prune:
+    automatic: true
+    number: 3
+  # lambdaInsights:
+  #   defaultLambdaInsights: true
+  #   lambdaInsightsVersion: 16
+  #   attachPolicy: true
+  responseGetters:
+    headers:
+      Content-Type: "'application/json'"
+      Content-Security-Policy: "'Include default-src 'self''"
+      X-Frame-Options: "'DENY'"
+      X-Content-Type-Options: "'nosniff'"
+      X-Permitted-Cross-Domain-Policies: "'none'"
+      Strict-Transport-Security: "'max-age=31536000; includeSubDomains; preload'"
+      X-XSS-Protection: "'1'"
+      Cache-Control: "'max-age=0; Expires=-1 or Expires: Fri, 01 Jan 1990 00:00:00 GMT; no-cache, must-revalidate'"
+    statusCodes:
+      200:
+        pattern: ""
+      400:
+        pattern: '"statusCode"\s*:\s*400'
+        template: "$input.path('$.errorMessage')"
+      401:
+        pattern: '.*"statusCode":401.*'
+        template: "$input.path('$.errorMessage')"
+      404:
+        pattern: '.*"statusCode":404.*'
+        template: "$input.path('$.errorMessage')"
+      500:
+        pattern: '.*"statusCode":500.*'
+        template: "$input.path('$.errorMessage')"
+
+plugins:
+  - serverless-prune-plugin
+  - serverless-esbuild
+  - serverless-offline
+
+functions:
+  createUser:
+    handler: src/functions/createUser.handler
+    description: Create a new user
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          method: POST
+          path: /user
+          integration: lambda
+          response: ${self:custom.responseGetters}
+  getUserData: 
+    handler: src/functions/getUserData.handler
+    description: Get user information for a given username
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          method: GET
+          path: /user/{username}
+          integration: lambda
+          response: ${self:custom.responseGetters}
+  setFollower:
+    handler: src/functions/setFollower.handler
+    description: Create a new follower
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          method: POST
+          path: /follower
+          integration: lambda
+          response: ${self:custom.responseGetters}
+  getFollower: 
+    handler: src/functions/getFollower.handler
+    description: Get user information for a given username
+    timeout: 30
+    memorySize: 512    
+    events:
+      - http:
+          method: GET
+          path: /user/follower/{username}
+          integration: lambda
+          response: ${self:custom.responseGetters}
+  setFollowing:
+    handler: src/functions/setFollowing.handler
+    description: Create a new Following
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          method: POST
+          path: /following
+          integration: lambda
+          response: ${self:custom.responseGetters}
+  getFollowing: 
+    handler: src/functions/getFollowing.handler
+    description: Get user following by username
+    timeout: 30
+    memorySize: 512    
+    events:
+      - http:
+          method: GET
+          path: /user/following/{username}
+          integration: lambda
+          response: ${self:custom.responseGetters}
+
+resources:
+  Resources:
+    socialNetworkDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.SOCIAL_NETWORK_TABLE_NAME}
+        AttributeDefinitions:
+          - AttributeName: "PK"
+            AttributeType: "S"
+          - AttributeName: "SK"
+            AttributeType: "S"
+        KeySchema:
+          - AttributeName: "PK"
+            KeyType: "HASH"
+          - AttributeName: "SK"
+            KeyType: "RANGE"
+        BillingMode: PAY_PER_REQUEST
