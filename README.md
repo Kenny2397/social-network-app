@@ -71,3 +71,7 @@ This use case talks about using DynamoDB as a social network. A social network i
 * Get the like count for a given postID
 
 * Get the timeline for a given userID
+
+## Single table design
+
+![STD](https://docs.aws.amazon.com/images/amazondynamodb/latest/developerguide/images/DataModeling/SocialNetwork8.png)
