@@ -121,17 +121,6 @@ functions:
           path: /user/follower/{username}
           integration: lambda
           response: ${self:custom.responseGetters}
-  setFollowing:
-    handler: src/functions/setFollowing.handler
-    description: Create a new Following
-    timeout: 30
-    memorySize: 512
-    events:
-      - http:
-          method: POST
-          path: /following
-          integration: lambda
-          response: ${self:custom.responseGetters}
   getFollowing: 
     handler: src/functions/getFollowing.handler
     description: Get user following by username

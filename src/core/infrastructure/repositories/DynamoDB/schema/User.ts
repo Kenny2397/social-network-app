@@ -1,4 +1,4 @@
-import { PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb'
+import { QueryCommand, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb'
 import { unmarshall } from '@aws-sdk/util-dynamodb'
 import { config } from '@config/environment'
 import { User } from '@domain/models/User'
@@ -26,10 +26,21 @@ export class UserDynamoDB extends Item {
     return 'INFO'
   }
 
+  get skCount () {
+    return 'COUNT'
+  }
+
   public keysInfo () {
     return {
       PK: { S: this.pk },
       SK: { S: this.skInfo }
+    }
+  }
+
+  public keysCount () {
+    return {
+      PK: { S: this.pk },
+      SK: { S: this.skCount }
     }
   }
 
@@ -52,23 +63,44 @@ export class UserDynamoDB extends Item {
     const user = new UserDynamoDB(userData.username)
     
     try {
-      const command = new PutItemCommand({
-        TableName: config.socialNetworkTableName,
-        Item: {
-          ...user.keysInfo(),
-          username: { S: userData.username },
-          firstName: { S: userData.firstName },
-          lastName: { S: userData.lastName },
-          email: { S: userData.email },
-          phone: { S: userData.phone },
-          birthDate: { S: userData.birthDate },
-          createdAt: { S: new Date().toISOString() },
-          updatedAt: { S: new Date().toISOString() }
-        },
-      })
-  
+
+      const command = new TransactWriteItemsCommand({
+        TransactItems: [
+          {
+            Put: {
+              TableName: config.socialNetworkTableName,
+              Item: {
+                ...user.keysInfo(),
+                username: { S: userData.username },
+                firstName: { S: userData.firstName },
+                lastName: { S: userData.lastName },
+                email: { S: userData.email },
+                phone: { S: userData.phone },
+                birthDate: { S: userData.birthDate },
+                createdAt: { S: new Date().toISOString() },
+                updatedAt: { S: new Date().toISOString() }
+              },
+              ConditionExpression: 'attribute_not_exists(PK)'
+            }
+          },
+          {
+            Put: {
+              TableName: config.socialNetworkTableName,
+              Item: {
+                ...user.keysCount(),
+                'follower#': { N: '0' },
+                'following#': { N: '0' },
+                'post#': { N: '0' }
+              },
+              ConditionExpression: 'attribute_not_exists(PK)'
+            }
+          }
+        ]
+      }
+      )
+      
       const response = await client.send(command)
-      logger.info('createUserInfo - response', { response })
+      logger.info('createUserInfo : command - response', { command, response })
     
       if (response.$metadata.httpStatusCode !== 200) {
         throw new Error('Error creating user')

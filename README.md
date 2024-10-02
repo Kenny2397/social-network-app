@@ -13,14 +13,22 @@ Backend social network application using serverless framework ,typescript, AWS, 
 
 ## Usage
 
-Navigate into a branch to specific implementation.
+pnpm install
 
 
 ## Blogs list
 
-- Desarrollando Aplicaciones Escalables con Arquitectura Hexagonal, Serverless Framework, TypeScript y AWS
+- Implementando una API REST utilizando TypeScript con Serverless Framework y AWS 
 
-https://medium.com/@kenny.luque.t/c31c8e3cbac6
+    https://medium.com/@kenny.luque.t/71d5c1810db6
+
+- Construyendo un template para tus proyectos de serverless framework y TypeScript
+
+    https://medium.com/@kenny.luque.t/f5d962c41d9c
+
+- Desarrollando Aplicaciones Escalables con Arquitectura Hexagonal, Serverless Framework TypeScript y AWS
+
+    https://medium.com/@kenny.luque.t/c31c8e3cbac6
 
 ## Estrctura del proyecto
 
