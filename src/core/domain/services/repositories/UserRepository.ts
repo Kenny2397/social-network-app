@@ -3,5 +3,5 @@ import { CreateUserType } from 'src/core/app/schemas/UserSchema'
 
 export interface UserRepository {
   createUser(userData: CreateUserType): Promise<string>
-  getUserData(username: string): Promise<User>
+  getUserData(username: string): Promise<User | undefined>
 }

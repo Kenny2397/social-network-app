@@ -1,11 +1,19 @@
 import { PostRepository } from '@domain/services/repositories/PostRepository'
+import { UserRepository } from '@domain/services/repositories/UserRepository'
+import { GenerateError } from 'src/powertools/utilities'
+import { CreatePostType } from '../schemas/PostSchema'
 
 export class CreatePostUsecase {
   constructor (
-    private readonly PostRepository: PostRepository
+    private readonly userRepository: UserRepository,
+    private readonly postRepository: PostRepository
   ) {}
 
-  async setPost (postData: object): Promise<void> {
-    await this.PostRepository.createPost(postData)
+  async createPost (postData: CreatePostType): Promise<string> {
+
+    const user = await this.userRepository.getUserData(postData.username)
+    if (!user) throw new GenerateError(404, { detail: 'User not found' })
+    
+    return await this.postRepository.createPost(postData)
   }
 }

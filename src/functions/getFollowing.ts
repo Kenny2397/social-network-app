@@ -17,12 +17,7 @@ export const handler = async (event: APIGatewayProxyEvent, _context: Partial<Con
 
   const res = await getFollowingController.exec(event)
 
-  return {
-    statusCode: 200,
-    body: {
-      data: res
-    }
-  }
+  return res
 }
 
 

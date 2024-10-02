@@ -1,7 +1,8 @@
 import { APIGatewayProxyEvent, Context } from 'aws-lambda'
 import { Handler } from 'src/core/app/ports/in/http/handler'
-import { SetFollowerSchema } from 'src/core/app/schemas/FollowerSchema'
+import { CreatePostSchema, CreatePostType } from 'src/core/app/schemas/PostSchema'
 import { CreatePostUsecase } from 'src/core/app/usecases/CreatePostUsecase'
+import { responseHandler } from 'src/powertools/utilities'
 
 export class CreatePostController implements Handler<APIGatewayProxyEvent, Partial<Context>> {
 
@@ -12,16 +13,15 @@ export class CreatePostController implements Handler<APIGatewayProxyEvent, Parti
   async exec (event: APIGatewayProxyEvent) {
     try {
       const eventBody = event.body
-      const postInput = SetFollowerSchema.parse(eventBody)
+      const postInput: CreatePostType = CreatePostSchema.parse(eventBody)
 
-      const response = await this.createPostUsecase.setPost(postInput)
+      const response = await this.createPostUsecase.createPost(postInput)
       
-      return response
+      return responseHandler(200, {
+        postId: response
+      })
     } catch (error) {
-      return {
-        statusCode: 500,
-        body: { message: (error as Error).message }
-      }
+      return responseHandler(500, null, error as Error)
     }
   }
 }

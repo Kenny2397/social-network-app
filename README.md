@@ -13,8 +13,19 @@ Backend social network application using serverless framework ,typescript, AWS, 
 
 ## Usage
 
-pnpm install
+Clone this repository and install dependencies
 
+- Install CLI serverless
+
+    npm install serverless -g
+
+- setting credentials
+
+    aws configure
+
+- deploy
+
+    npm run deploy
 
 ## Blogs list
 

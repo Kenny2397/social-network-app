@@ -18,14 +18,9 @@ export const handler = async (event: APIGatewayProxyEvent, _context: Partial<Con
     service: 'Get user data'
   })
   
-  const response = await getUserController.exec(event)
+  const res = await getUserController.exec(event)
 
-  return {
-    statusCode: 200,
-    body: {
-      data: response
-    },
-  }
+  return res
 }
 
 

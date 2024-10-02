@@ -1,7 +1,8 @@
 export interface Post {
+  id?: string;
+  username: string
   title: string;
-  description: string;
-  keywords: string[];
-  date: string;
+  subtitle: string;
+  content: string;
   imageUrl: string;
 }

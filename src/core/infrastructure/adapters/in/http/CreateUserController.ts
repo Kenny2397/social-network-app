@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, Context } from 'aws-lambda'
 import { Handler } from 'src/core/app/ports/in/http/handler'
 import { CreateUserSchema } from 'src/core/app/schemas/UserSchema'
 import { CreateUserUsecase } from 'src/core/app/usecases/CreateUserUsecase'
+import { responseHandler } from 'src/powertools/utilities'
 
 export class CreateUserController implements Handler<APIGatewayProxyEvent, Partial<Context>> {
 
@@ -17,14 +18,11 @@ export class CreateUserController implements Handler<APIGatewayProxyEvent, Parti
 
       const response = await this.createUserUsecase.CreateUser(userData)
       
-      return response
-
+      return responseHandler(200, {
+        username: response
+      })
     } catch (error) {
-      console.log(error)
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ message: (error as Error).message }),
-      }
+      return responseHandler(500, null, error)
     }
   }
 }

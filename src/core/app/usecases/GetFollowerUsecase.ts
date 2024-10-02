@@ -7,6 +7,6 @@ export class GetFollowerUsecase {
   ) {}
 
   async GetFollowerList (username: string): Promise<Follower[]> {
-    return this.followerRepository.getFollowerListByUsername(username)
+    return await this.followerRepository.getFollowerListByUsername(username)
   }
 }

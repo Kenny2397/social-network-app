@@ -7,6 +7,6 @@ export class CreateUserUsecase {
   ) {}
 
   async CreateUser (userData: CreateUserType): Promise<string> {
-    return this.userRepository.createUser(userData)
+    return await this.userRepository.createUser(userData)
   }
 }

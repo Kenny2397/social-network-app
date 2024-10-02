@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, Context } from 'aws-lambda'
 import { Handler } from 'src/core/app/ports/in/http/handler'
 import { GetUserUsecase } from 'src/core/app/usecases/GetUserUsecase'
-import { logger } from 'src/powertools/utilities'
+import { logger, responseHandler } from 'src/powertools/utilities'
 
 export class GetUserController implements Handler<APIGatewayProxyEvent, Partial<Context>> {
 
@@ -15,13 +15,12 @@ export class GetUserController implements Handler<APIGatewayProxyEvent, Partial<
       logger.info(`Getting user ${username}`)
       const response = await this.getUserUsecase.GetUser(username)
       
-      return response
+      return responseHandler(200, {
+        data: response
+      })
 
     } catch (error) {
-      return {
-        statusCode: 500,
-        body: { message: (error as Error).message }
-      }
+      return responseHandler(500, null, error)
     }
   }
 }

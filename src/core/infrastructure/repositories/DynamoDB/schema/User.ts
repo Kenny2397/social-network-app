@@ -1,9 +1,9 @@
-import { QueryCommand, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb'
+import { AttributeValue, QueryCommand, TransactWriteItemsCommand } from '@aws-sdk/client-dynamodb'
 import { unmarshall } from '@aws-sdk/util-dynamodb'
 import { config } from '@config/environment'
-import { User } from '@domain/models/User'
+import { User, UserCount, UserInfo } from '@domain/models/User'
 import { CreateUserType } from 'src/core/app/schemas/UserSchema'
-import { logger } from 'src/powertools/utilities'
+import { GenerateError, logger } from 'src/powertools/utilities'
 import { getClient } from './Client'
 import { Item } from './Item'
 
@@ -44,17 +44,27 @@ export class UserDynamoDB extends Item {
     }
   }
 
-  static toUserDomain (user: Record<string, unknown>): User {
-    return  {
-      username: user.username,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phone: user.phone,
-      birthDate: user.birthDate,
-      updatedAt: user.updatedAt,
-      createdAt: user.createdAt,
+  static fromQuery (items: Record<string, AttributeValue>[]) {
+    const response = {
+      count: {},
+      info: {}
     } as User
+
+    items.map(item => {
+      const userdata = unmarshall(item)
+      const SK = userdata.SK
+
+      delete userdata.PK,
+      delete userdata.SK
+
+      if (SK === 'COUNT') {
+        response.count = userdata as UserCount
+      } else {
+        response.info = userdata as UserInfo
+      }
+    })
+
+    return response
   }
 
   static async createUserInfo (userData: CreateUserType) {
@@ -88,9 +98,9 @@ export class UserDynamoDB extends Item {
               TableName: config.socialNetworkTableName,
               Item: {
                 ...user.keysCount(),
-                'follower#': { N: '0' },
-                'following#': { N: '0' },
-                'post#': { N: '0' }
+                'follower': { N: '0' },
+                'following': { N: '0' },
+                'post': { N: '0' }
               },
               ConditionExpression: 'attribute_not_exists(PK)'
             }
@@ -100,16 +110,12 @@ export class UserDynamoDB extends Item {
       )
       
       const response = await client.send(command)
-      logger.info('createUserInfo : command - response', { command, response })
-    
-      if (response.$metadata.httpStatusCode !== 200) {
-        throw new Error('Error creating user')
-      }
+      logger.debug('createUserInfo : command - response', { command, response })
     
       return userData.username
     } catch (error) {
       logger.error('createUserInfo - error', { error })
-      throw new Error('Error creating user')
+      throw new GenerateError(400, { detail: 'User already exist' })
     }
   }
 
@@ -124,14 +130,20 @@ export class UserDynamoDB extends Item {
         ':username': { S: user.pk }
       }
     })
-  
-    const response = await client.send(command)
-    logger.info('getUser - response', {
-      command,
-      response
-    })
-    const userRaw = unmarshall(response.Items![0]!)
 
-    return this.toUserDomain(userRaw)
+    try {
+      const response = await client.send(command)
+      logger.debug('getUser - response', { command, response })
+
+      if (response.Count === 0) {
+        return undefined
+      }
+
+      return this.fromQuery(response.Items!)
+    }
+    catch (error) {
+      logger.error('getUser - error', { error })
+      throw new GenerateError(500, { detail: 'Error getting user' })
+    }
   }
 }

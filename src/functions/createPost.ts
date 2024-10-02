@@ -1,13 +1,15 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda'
 
 import { CreatePostController } from '@infrastructure/adapters/in/http/CreatePostController'
-import { DynamoDBCreatePostRepository } from '@infrastructure/repositories/DynamoDB/DynamoDBCreatePostRepository'
+import { DynamoDBPostRepository } from '@infrastructure/repositories/DynamoDB/DynamoDBPostRepository'
+import { DynamoDBUserRepository } from '@infrastructure/repositories/DynamoDB/DynamoDBUserRepository'
 import { CreatePostUsecase } from 'src/core/app/usecases/CreatePostUsecase'
 import { logger } from 'src/powertools/utilities'
 
 const createPostController = new CreatePostController(
   new CreatePostUsecase(
-    new DynamoDBCreatePostRepository()
+    new DynamoDBUserRepository(),
+    new DynamoDBPostRepository()
   )
 )
 
@@ -17,10 +19,5 @@ export const handler = async (event: APIGatewayProxyEvent, _context: Partial<Con
   logger.logEventIfEnabled(event)
   const res = await createPostController.exec(event)
 
-  return {
-    statusCode: 200,
-    body: {
-      data: res
-    }
-  }
+  return res
 }

@@ -21,7 +21,7 @@ provider:
       Resource:
         - "arn:aws:dynamodb:${opt:region}:*:table/${self:provider.environment.SOCIAL_NETWORK_TABLE_NAME}"
   environment:
-    POWERTOOLS_LOG_LEVEL: "INFO"
+    POWERTOOLS_LOG_LEVEL: "DEBUG"
     POWERTOOLS_SERVICE_NAME: "social-network-app"
     # POWERTOOLS_DEV: 1
     POWERTOOLS_LOGGER_LOG_EVENT: "true"  #context
@@ -59,7 +59,7 @@ custom:
       200:
         pattern: ""
       400:
-        pattern: '"statusCode"\s*:\s*400'
+        pattern: '.*"statusCode":400.*'
         template: "$input.path('$.errorMessage')"
       401:
         pattern: '.*"statusCode":401.*'
@@ -130,6 +130,28 @@ functions:
       - http:
           method: GET
           path: /user/following/{username}
+          integration: lambda
+          response: ${self:custom.responseGetters}
+  createPost:
+    handler: src/functions/createPost.handler
+    description: Create a new post of user
+    timeout: 30
+    memorySize: 512
+    events:
+      - http:
+          method: POST
+          path: /post
+          integration: lambda
+          response: ${self:custom.responseGetters}
+  getAllPostOfUser: 
+    handler: src/functions/getAllPostOfUser.handler
+    description: Get all post of user
+    timeout: 30
+    memorySize: 512    
+    events:
+      - http:
+          method: GET
+          path: /post/user/{username}
           integration: lambda
           response: ${self:custom.responseGetters}
 

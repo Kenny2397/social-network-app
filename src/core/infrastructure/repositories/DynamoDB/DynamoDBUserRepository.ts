@@ -1,6 +1,7 @@
 import { User } from '@domain/models/User'
 import { UserRepository } from '@domain/services/repositories/UserRepository'
 import { CreateUserType } from 'src/core/app/schemas/UserSchema'
+import { logger } from 'src/powertools/utilities'
 import { UserDynamoDB } from './schema/User'
 
 export class DynamoDBUserRepository implements UserRepository {
@@ -11,9 +12,10 @@ export class DynamoDBUserRepository implements UserRepository {
     return res!
   }
 
-  async getUserData (username: string): Promise<User> {
+  async getUserData (username: string): Promise<User | undefined> {
     const user = await UserDynamoDB.getUser(username)
-
+    logger.debug('getUserData', { user })
     return user
   }
+
 }

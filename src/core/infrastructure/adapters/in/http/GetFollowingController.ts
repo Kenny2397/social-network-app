@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, Context } from 'aws-lambda'
 import { Handler } from 'src/core/app/ports/in/http/handler'
 import { GetFollowingUsecase } from 'src/core/app/usecases/GetFollowingUsecase'
-import { logger } from 'src/powertools/utilities'
+import { logger, responseHandler } from 'src/powertools/utilities'
 
 export class GetFollowingController implements Handler<APIGatewayProxyEvent, Partial<Context>> {
 
@@ -15,12 +15,11 @@ export class GetFollowingController implements Handler<APIGatewayProxyEvent, Par
       logger.info(`Getting a list of followings of username: ${username}`)
       const response = await this.getFollowingUsecase.GetFollowingList(username)
       
-      return response
+      return responseHandler(200, {
+        data: response
+      })
     } catch (error) {
-      return {
-        statusCode: 500,
-        body: { message: (error as Error).message }
-      }
+      return responseHandler(500, null, error as Error)
     }
   }
 }
